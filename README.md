@@ -14,6 +14,7 @@ There are no special arguments. This script has the following functionalitites
    Make sure to download glove.42B.300d.zip and copy it to the 'Data' directory of the repository
 4) Splits the data in training, validation and test and exports a series of .csv files that will be used for the model training phase
    x_train.csv, x_val.csv, x_test.csv, y_train_csv, y_val.csv, y_test.csv, embedding_matrix.csv
+   These files are stored in the 'Data' directory.
 
 As a second step, there are two python scripts that have a very similar functionality: LSTM1.py and LSTM2.py.
 These two scripts are responsible for building and training an LSTM neural network on the training set. They train models with slightly different architecture.
@@ -35,4 +36,8 @@ python LSTM1.py config1
 This command will import the data set, as well as the configuration parameters stored in configuration file "config1.json" and perform the model training. Then, it will export
 the best model that occured during training to Models/LSTM1/config1/checkpoint. If the directory config1 does not exist within the LSTM1 directory, it will be created by the
 script. Moreover, it will generate a plot of Training Loss / Validation Loss over the epochs of the training and store it in Models/LSTM1/config1. Finally, it will print a 
-summary of the model architecture, as well as the confusion matrix, calculated for the test set.
+summary of the model architecture, as well as the confusion matrix, calculated for the test set. 
+
+DO NOT type: python LSTM.py config1.json
+
+The .json file extension is added by the scripts, so this will lead to errors, since the script will try to access the config1.json.json configuration file. 
