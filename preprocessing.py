@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 import re
@@ -19,7 +18,7 @@ import operator
 #   The file was too big to include in the repo.It can be downloaded from here: https://nlp.stanford.edu/projects/glove/
 #   Make sure to download glove.42B.300d.zip and copy it to the 'Data' directory of the repository
 # 4) Exports a series of csv files that will be used for the model training phase
-#   x_train.csv, x_test.csv, y_train_csv, y_test.csv, embedding_matrix.csv
+#   x_train.csv, x_val.csv, x_test.csv, y_train_csv, y_val.csv, y_test.csv, embedding_matrix.csv
 
 # Define the directory paths
 root_dir = os.getcwd()
@@ -61,21 +60,25 @@ clean = []
 for post in ssrs['Post']:
     clean.append(" ".join(post_to_wordlist(post)))
 
-# Fitting a tokenizer on the cleaned posts to index the vocabulary
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts(clean)
+# Join the cleaned posts with the corresponding labels in a new DF
+ssrs_c = pd.DataFrame(clean, columns=['Post']).join(ssrs['Label'])
+
+# Split Dataset into Training and Test data to be stored in different files
+training_data, test_data = train_test_split(ssrs_c[['Post', 'Label']], test_size=0.2, stratify=ssrs_c[['Label']],
+                                            random_state=6)
+
+# Split Training Data into Training set and Validation set to be stored in different files
+train_data, val_data = train_test_split(training_data[['Post', 'Label']], test_size=0.2,
+                                        stratify=training_data[['Label']], random_state=6)
+
+# Fitting a tokenizer on the Training Set to index the known vocabulary
+tokenizer = Tokenizer(oov_token='OOV')
+tokenizer.fit_on_texts(train_data['Post'])
 
 # Saving the size and the index of our vocabulary
 word_index = tokenizer.word_index
 vocab_size = len(tokenizer.word_index) + 1
 print("Vocabulary Size :", vocab_size)
-
-# Join the cleaned posts with the corresponding labels in a new DF
-ssrs_c = pd.DataFrame(clean, columns=['Post']).join(ssrs['Label'])
-
-# Split Dataset into Training and Testing set to be stored in different files
-train_data, test_data = train_test_split(ssrs_c[['Post', 'Label']], test_size=0.2, stratify=ssrs_c[['Label']],
-                                         random_state=6)
 
 # Not all posts have the same length. We need to address that through zero padding
 MAX_SEQUENCE_LENGTH = max(pd.DataFrame(len(post.split()) for post in clean)[0])
@@ -84,23 +87,32 @@ print("Max Sequence Length :", MAX_SEQUENCE_LENGTH)
 # All posts are translated to sequences of numbers through the Tokenizer that was trained earlier
 # Additionally, zero padding is applied so that all posts have the same length, equal to MAX_SEQUENCE_LENGTH
 x_train = pad_sequences(tokenizer.texts_to_sequences(train_data['Post']), maxlen=MAX_SEQUENCE_LENGTH)
+x_val = pad_sequences(tokenizer.texts_to_sequences(val_data['Post']), maxlen=MAX_SEQUENCE_LENGTH)
 x_test = pad_sequences(tokenizer.texts_to_sequences(test_data['Post']), maxlen=MAX_SEQUENCE_LENGTH)
 
-# Encoding the labels to numbers
-labels = train_data.Label.unique().tolist()
-encoder = LabelEncoder()
-encoder.fit(train_data.Label.to_list())   # First we fit the encoder
-
-# Then we apply it to our label matrices
-y_train = encoder.transform(train_data.Label.to_list())
-y_test = encoder.transform(test_data.Label.to_list())
+# Manual encoding of our labels due to their Ordinal Nature
+y_train = np.where(train_data.Label == 'Supportive', 0,
+                   np.where(train_data.Label == 'Indicator', 1,
+                            np.where(train_data.Label == 'Ideation', 2,
+                                     np.where(train_data.Label == 'Behavior', 3, 4))))
+y_val = np.where(val_data.Label == 'Supportive', 0,
+                 np.where(val_data.Label == 'Indicator', 1,
+                          np.where(val_data.Label == 'Ideation', 2,
+                                   np.where(val_data.Label == 'Behavior', 3, 4))))
+y_test = np.where(test_data.Label == 'Supportive', 0,
+                  np.where(test_data.Label == 'Indicator', 1,
+                           np.where(test_data.Label == 'Ideation', 2,
+                                    np.where(test_data.Label == 'Behavior', 3, 4))))
 y_train = y_train.reshape(-1, 1)
+y_val = y_val.reshape(-1, 1)
 y_test = y_test.reshape(-1, 1)
 
-# Export the x_train, x_test, y_train, y_test matrices as csv files
+# Export the x_train, x_val, x_test, y_train, y_val, y_test matrices as csv files
 pd.DataFrame(x_train).to_csv(os.path.join(data_dir, 'x_train.csv'), index=False)
+pd.DataFrame(x_val).to_csv(os.path.join(data_dir, 'x_val.csv'), index=False)
 pd.DataFrame(x_test).to_csv(os.path.join(data_dir, 'x_test.csv'), index=False)
 pd.DataFrame(y_train).to_csv(os.path.join(data_dir, 'y_train.csv'), index=False)
+pd.DataFrame(y_val).to_csv(os.path.join(data_dir, 'y_val.csv'), index=False)
 pd.DataFrame(y_test).to_csv(os.path.join(data_dir, 'y_test.csv'), index=False)
 
 # Importing a set of pretrained word embeddings from the Glove project and tuning them to our vocabulary
@@ -139,8 +151,8 @@ def check_coverage(vocab, embeddings_index):
             i += vocab[word]
             pass
 
-    print('Found embeddings for {:.2%} of vocab'.format(len(a) / len(vocab)))
-    print('Found embeddings for  {:.2%} of all text'.format(k / (k + i)))
+    print('Found embeddings for {:.2%} of training vocab'.format(len(a) / len(vocab)))
+    print('Found embeddings for  {:.2%} of all training text'.format(k / (k + i)))
     sorted_x = sorted(oov.items(), key=operator.itemgetter(1))[::-1]
 
     return sorted_x
@@ -162,7 +174,7 @@ def build_vocab(sentences):
 
 
 # Count the word frequencies in our vocabulary
-vocab = build_vocab(list(pd.DataFrame(clean)[0].apply(lambda x: x.split())))
+vocab = build_vocab(list(train_data['Post'].apply(lambda x: x.split())))
 
 # Calculating the coverage and sorting the word frequency dictionary
 oov = check_coverage(vocab, embeddings_index)
@@ -176,5 +188,5 @@ for word, i in word_index.items():
     if embedding_vector is not None:
         embedding_matrix[i] = embedding_vector
 
-# Export the embeddings in a csv file
+# Export the embeddings for our vocabulary in a csv file
 pd.DataFrame(embedding_matrix).to_csv(os.path.join(data_dir, 'embedding_matrix.csv'), index=False)
