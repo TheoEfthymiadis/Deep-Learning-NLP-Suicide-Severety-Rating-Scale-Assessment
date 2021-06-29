@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 import re
@@ -86,14 +85,15 @@ print("Max Sequence Length :", MAX_SEQUENCE_LENGTH)
 x_train = pad_sequences(tokenizer.texts_to_sequences(train_data['Post']), maxlen=MAX_SEQUENCE_LENGTH)
 x_test = pad_sequences(tokenizer.texts_to_sequences(test_data['Post']), maxlen=MAX_SEQUENCE_LENGTH)
 
-# Encoding the labels to numbers
-labels = train_data.Label.unique().tolist()
-encoder = LabelEncoder()
-encoder.fit(train_data.Label.to_list())   # First we fit the encoder
-
-# Then we apply it to our label matrices
-y_train = encoder.transform(train_data.Label.to_list())
-y_test = encoder.transform(test_data.Label.to_list())
+# Manual encoding of our labels due to their Ordinal Nature
+y_train = np.where(train_data.Label == 'Supportive', 0,
+                   np.where(train_data.Label == 'Indicator', 1,
+                            np.where(train_data.Label == 'Ideation', 2,
+                                     np.where(train_data.Label == 'Behavior', 3, 4))))
+y_test = np.where(test_data.Labe == 'Supportive', 0,
+                  np.where(test_data.Label == 'Indicator', 1,
+                           np.where(test_data.Label == 'Ideation', 2,
+                                    np.where(test_data.Label == 'Behavior', 3, 4))))
 y_train = y_train.reshape(-1, 1)
 y_test = y_test.reshape(-1, 1)
 
