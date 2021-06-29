@@ -8,6 +8,7 @@ from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from sklearn.metrics import confusion_matrix
 import json
 import os
 import sys
@@ -24,18 +25,19 @@ tf.random.set_seed(0)
 # import files
 embedding_matrix = pd.read_csv(os.path.join(data_dir, 'embedding_matrix.csv'))
 x_train = pd.read_csv(os.path.join(data_dir, 'x_train.csv'))
+x_val = pd.read_csv(os.path.join(data_dir, 'x_val.csv'))
 x_test = pd.read_csv(os.path.join(data_dir, 'x_test.csv'))
 y_train = pd.read_csv(os.path.join(data_dir, 'y_train.csv'))
+y_val = pd.read_csv(os.path.join(data_dir, 'y_val.csv'))
 y_test = pd.read_csv(os.path.join(data_dir, 'y_test.csv'))
 
 # Model configuration #
 
 # ### Constant Parameters ###
 max_sequence_length = 3183
-validation_split = 0.20
 verbosity_mode = 1
 EMBEDDING_DIM = 300
-vocab_size = 11215
+vocab_size = 9211
 
 # ### Configurable parameters imported from the configuration file ###
 
@@ -114,15 +116,35 @@ ReduceLROnPlateau = ReduceLROnPlateau(factor=0.1, min_lr=0.01, monitor='loss', v
 checkpoint_filepath = os.path.join(os.path.join(model_dir, model_path), sys.argv[1] + '\\Checkpoint')
 model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
      filepath=checkpoint_filepath,
-     save_weights_only=True,
+     save_weights_only=False,
      monitor='val_loss',
-     mode='max',
+     mode='min',
      save_best_only=True)
 
-# Train the model
-history = model.fit(x_train, y_train, batch_size=batch_size, epochs=number_of_epochs, verbose=verbosity_mode,
-                    shuffle=True, validation_split=validation_split,
-                    callbacks=[model_checkpoint_callback, ReduceLROnPlateau])
+# Fetching features and labels for the training process
+train_data_n = np.c_[x_train, y_train]
+valid_data_n = np.c_[x_val, y_val]
 
-# Plot training loss vs validation loss over the training epochs
-plot_history(history)
+# Training the model and storing the history
+history = model.fit(train_data_n[:, :-1], train_data_n[:, -1], batch_size=batch_size, epochs=number_of_epochs,
+                    verbose=verbosity_mode, shuffle=True, validation_data=(valid_data_n[:, :-1], valid_data_n[:, -1]),
+                    callbacks=[EarlyStopping(monitor='val_loss', patience=5), model_checkpoint_callback,
+                               ReduceLROnPlateau])
+
+# Export a training-validation loss over epochs plot
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig(os.path.join(os.path.join(model_dir, model_path), sys.argv[1] + '\\Training-Validation_Loss.png'))
+
+# Test the model after training
+y_estimate = model.predict(x_test)
+
+for index, element in enumerate(y_estimate):
+    element[0] = round(element[0])
+
+print('Confusion Matrix')
+print(confusion_matrix(y_test, y_estimate))
