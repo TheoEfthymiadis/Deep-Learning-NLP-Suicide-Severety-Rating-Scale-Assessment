@@ -43,4 +43,13 @@ DO NOT type: python LSTM.py config1.json
 The .json file extension is added by the scripts, so this will lead to errors, since the script will try to access the config1.json.json configuration file. 
 
 As a third step, there is the Evaluation.py python script. This script imports the test set along with a specific model that was saved during the previous step to perform the evaluation of the model. It calculates a speciallized evaluation measure proposed by Enrique Amigó et al. (https://arxiv.org/abs/2006.01245) for ordinal classification, known as
-Closeness Evaluation Measure (CEM). The script prints the CEM for the specific model and test set along with the commonly used accuracy and macro-average F1 score metrics for comparisson reasons.
+Closeness Evaluation Measure (CEM). The script prints the CEM for the specific model and test set along with the commonly used accuracy and macro-average F1 score metrics for comparisson reasons. The file can be run by typing the following commands in the terminal:
+
+python Evaluation.py LSTM1 config7
+
+This example command will import the model that was trained using the architecture of the LSTM1.py script with the configuration of the config7.json configuration file and 
+proceed with the evaluation. In some cases, the import of the model might fail due to some issues with incompatibility of different versions of Keras. Α related issue is here:
+https://datascience.stackexchange.com/questions/27984/problem-with-keras-model-loading
+
+
+
