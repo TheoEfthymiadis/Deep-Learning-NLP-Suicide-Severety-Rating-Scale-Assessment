@@ -41,3 +41,6 @@ summary of the model architecture, as well as the confusion matrix, calculated f
 DO NOT type: python LSTM.py config1.json
 
 The .json file extension is added by the scripts, so this will lead to errors, since the script will try to access the config1.json.json configuration file. 
+
+As a third step, there is the Evaluation.py python script. This script imports the test set along with a specific model that was saved during the previous step to perform the evaluation of the model. It calculates a speciallized evaluation measure proposed by Enrique Amigó et al. (https://arxiv.org/abs/2006.01245) for ordinal classification, known as
+Closeness Evaluation Measure (CEM). The script prints the CEM for the specific model and test set along with the commonly used accuracy and macro-average F1 score metrics for comparisson reasons.
