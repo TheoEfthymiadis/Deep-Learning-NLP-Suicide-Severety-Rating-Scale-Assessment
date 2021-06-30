@@ -1,0 +1,12 @@
+{
+	"batch_size": "32",
+	"number_of_epochs": "30",
+	"optimizer": "rmsprop",
+	"LSTM1_units": "12",
+	"LSTM1_drop": "0.05",
+	"LSTM1_rec_drop": "0.05",
+	"Dense1_units": "6",
+	"Dense1_act": "relu",
+	"Dropout1": "0.05"
+}
+
