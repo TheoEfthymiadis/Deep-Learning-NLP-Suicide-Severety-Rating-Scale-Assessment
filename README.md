@@ -1,6 +1,6 @@
 # Deep-Learning-NLP-Suicide-Severity-Rating-Scale-Assessment
 This repository contains a series of data files and python scripts to train and evaluate an LSTM neural network for the analysis of Reddit posts through NLP to predict the
-probability of the author to commit suicide based on the SSR scale with 5 ordered classes (Supportive->Indicator->Ideation->Behavior->Attempt)
+probability of the author to commit suicide based on the SSR scale with 5 ordered classes (Supportive->Indicator->Ideation->Behavior->Attempt). We used the Reddit C-SSRS Suicide Dataset that can be found with DOI 10.5281/zenodo.2667859 (https://doi.org/10.5281/zenodo.2667859)
 
 The first step is to run the preprocessing.py python script. In order to do so, type in terminal:
 
