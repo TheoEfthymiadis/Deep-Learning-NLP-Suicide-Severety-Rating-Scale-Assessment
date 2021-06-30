@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 import sys
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 
 # Run the script as
 # python evaluation.py model_name config_name
@@ -126,4 +127,6 @@ def cem_calculation(y_test, y_estimate):
 
 accuracy = accuracy_score(y_test, y_estimate)
 print('Accuracy = ', accuracy)
+f1_score = f1_score(y_test, y_estimate, average='macro',)
+print('Macro Average F1 = ', f1_score)
 cem_calculation(y_test, y_estimate)
