@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 import os
 import sys
+from sklearn.metrics import accuracy_score
 
 # Run the script as
 # python evaluation.py model_name config_name
@@ -119,8 +120,10 @@ def cem_calculation(y_test, y_estimate):
         denom = mat.iloc[-1, column] * class_proxim.iloc[column, column]
         denominator = denominator + denom
     cem = numerator / denominator
-    print("CEM:", cem)
+    print("CEM = ", cem)
     return cem
 
 
+accuracy = accuracy_score(y_test, y_estimate)
+print('Accuracy = ', accuracy)
 cem_calculation(y_test, y_estimate)
