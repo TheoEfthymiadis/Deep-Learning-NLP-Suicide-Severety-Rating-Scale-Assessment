@@ -70,23 +70,6 @@ Dense1_act = config_data["Dense1_act"]
 # Disable eager execution
 tf.compat.v1.disable_eager_execution()
 
-
-# Function to plot the history of training- and validation Loss and Accuracy over training epochs
-def plot_history(history):
-    f, ax = plt.subplots(1, 1, figsize=(16, 7))
-
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-
-    epochs = range(1, len(loss) + 1)
-
-    plt.plot(epochs, loss, marker='o', color='r', label='Training loss')
-    plt.plot(epochs, val_loss, marker='o', color='b', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.legend()
-    plt.show()
-
-
 # Define the Keras model
 model = Sequential()
 
