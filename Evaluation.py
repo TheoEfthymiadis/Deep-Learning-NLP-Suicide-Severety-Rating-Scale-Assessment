@@ -3,7 +3,6 @@ import math
 from sklearn import metrics
 import numpy as np
 import tensorflow as tf
-# from tensorflow import keras
 import os
 import sys
 
